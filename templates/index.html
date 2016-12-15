@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+            <style type="text/css">
+            #upper-banner {
+                text-align: center;
+                /*background: cyan;*/
+            }
+            #left-container {
+                /*border-style: solid;*/
+            }
+            #right-container {
+                /*border-style: solid;*/
+            }
+
+
+            </style>
+            <title>BZ Vis</title>
+            <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+        </head>
+        <body>
+            <div class="container-fluid" style="background-color:rgba(220,220,245,0.0)">
+                <div class="container text-center" id="upper-banner" style="background-color:rgba(245, 245, 245, 0.5)">
+                    <p>BZ Visualization [Under Construction]</p>
+                </div>
+
+
+                <div class="container" style="background-color:rgba(245, 245, 245, 0.2)">
+                    <div class="col-sm-4" id="left-container">
+                        Control Panel [Under Construction]
+                    </div>
+                    <div class="col-sm-8" id="right-container">
+                        
+                        <div id="chart1"></div>
+                        Two oscillating BZ drops with different [H2SO4]
+                        <div id="chart2"></div>
+                        Dynamics of phases
+                    </div>
+                </div>
+            </div>
+            <script type="text/javascript">
+                var dropsize = {{a|tojson}};
+                var gapsize = {{b|tojson}};
+                var osc = {{osc|tojson}}
+                var phase = {{phase|tojson}}
+                var radius = dropsize/2;
+                var h = 100;
+                var w = (4 * radius + 3*gapsize);
+
+                var svg1 = d3.select("#chart1")
+                            .append("svg")
+                            .attr("width", w)   
+                            .attr("height", h)
+                            .style("background-color",'teal');
+                var circles = svg1.selectAll("circle")
+                                .data([radius,3*radius])
+                                .enter()
+                                .append("circle");
+                circles.attr("cx", function(d,i) { return d+ (i+1)*gapsize; })
+                        .attr("cy", h/2)
+                        .attr("r", function(d,i) { return radius; })
+                        .attr("fill","orange")
+                        .attr("class","droplet")
+                        .attr("id",function(d,i) { return "c_"+(i+1); });
+
+                var labels = svg1.selectAll("text")
+                                .data([radius,3*radius])
+                                .enter()
+                                .append("text")
+                labels.attr("x",function(d,i) { return d+(i+1)*gapsize; })
+                        .attr("y", h/2)
+                        .text(function(d,i) { return (i+1); })
+                        .attr("fill","white")
+
+                var svg2 = d3.select("#chart2").append("svg")
+                                .attr("width", w)   
+                                .attr("height", w)
+                                .style("background-color",'teal')
+
+                //create orbit for the phase difference radial plot
+                cOrbit = (w / 2);
+                rOrbit = cOrbit - 20;
+                alpha1 = toRadians(0);
+                alpha2 = toRadians(0);
+                var outRing = svg2.append("circle")
+                                .attr("cx",0 + cOrbit)
+                                .attr("cy",0 + cOrbit)
+                                .attr("r",rOrbit+1)
+                                .style('fill','yellow')
+                var innRing = svg2.append("circle")
+                                .attr("cx",0 + cOrbit)
+                                .attr("cy",0 + cOrbit)
+                                .attr("r",rOrbit-1)
+                                .style('fill','teal')
+                //create two balls to indicate phase of each oscillator
+                var ball1 = svg2.append('circle')
+                                .attr('class','ball')
+                                .attr('r',10)
+                                .attr('cx',cOrbit+rOrbit*Math.cos(alpha1))
+                                .attr('cy',cOrbit+rOrbit*Math.sin(alpha1))
+                                .style('fill','blue')
+                var ball2 = svg2.append('circle')
+                                .attr('class','ball')
+                                .attr('r',10)
+                                .attr('cx',cOrbit+rOrbit*Math.cos(alpha2))
+                                .attr('cy',cOrbit+rOrbit*Math.sin(alpha2))
+                                .style('fill','red')
+                tic = new Date();
+                setInterval(function () {
+                    //update droplets
+                    dt = Math.round((new Date() - tic)/50) % osc.length;
+                    d3.select("#c_1").transition().duration(100).style("opacity",function(){ return osc[dt][0]});
+                    d3.select("#c_2").transition().duration(100).style("opacity",function(){ return osc[dt][1]});
+
+                    //update phase orbit
+                    alpha1 = phase[dt][0];
+                    alpha2 = phase[dt][1];
+                    ball1.transition().duration(100)
+                            .attr('cx',cOrbit+rOrbit*Math.cos(alpha1))
+                            .attr('cy',cOrbit+rOrbit*Math.sin(alpha1));
+                    ball2.transition().duration(100)
+                            .attr('cx',cOrbit+rOrbit*Math.cos(alpha2))
+                            .attr('cy',cOrbit+rOrbit*Math.sin(alpha2));
+                })
+
+                function toRadians(degree) {
+                    return degree*Math.PI/180;
+                }
+                function toDegree(radians) {
+                    return radians*180/Math.PI;
+                }
+            </script>
+        </body>
+</html>
